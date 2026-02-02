@@ -34,12 +34,12 @@ const productSchema = new mongoose.Schema({
     colors: [
         {
             name: String,       // tím, đen, trắng...
-            code: String,       // #a88bcc
+            code: String,       // #58358373
             image: String,      // ảnh theo màu (nếu có)
         }
     ],
-    size: [{
-        type: Number,
+    sizes: [{
+        size: Number,
         stock: Number,
     }],
     isSale: {

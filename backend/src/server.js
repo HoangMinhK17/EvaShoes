@@ -1,6 +1,6 @@
 import express from 'express';
-import taskRoutes from './routes/taskRouters.js';
 import categoryRoutes from './routes/categoryRouters.js';
+import productRoutes from './routes/productRouters.js';
 import connectDB from './config/db.js';
 
 import dotenv from 'dotenv';
@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5001;
 const app = express();
 connectDB();
 app.use(express.json());
-app.use('/api/evashoes/', taskRoutes
+app.use('/api/evashoes/', productRoutes
                         , categoryRoutes
 );
 
