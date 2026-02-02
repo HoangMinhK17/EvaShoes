@@ -1,0 +1,85 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #fff;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+  width: 100%;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul, li {
+  list-style: none;
+}
+
+.main-content {
+  display: flex;
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+/* Utility Classes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #FFC107;
+  color: #333;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background-color: #FFB300;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 2px solid #FFC107;
+  color: #333;
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background-color: #FFC107;
+  color: #fff;
+}

@@ -1,0 +1,93 @@
+.banner {
+  /* background gradient fallback */
+  background: linear-gradient(135deg, #4ECDC4 0%, #87CEEB 100%);
+  padding: 120px 0;
+  margin: 20px 0 0 0;
+  /* make banner full-bleed */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  /* use background image for hero so image covers full-bleed area */
+  background-repeat: no-repeat;
+  background-position: center right;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  background-color: rgba(78, 205, 196, 0.7);
+}
+
+.banner-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.banner-text {
+  color: white;
+  z-index: 2;
+  max-width: 600px;
+}
+
+.banner-subtitle {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  opacity: 1;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.banner-title {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 30px;
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+
+.banner-image {
+  display: none;
+}
+
+.banner-image img {
+  display: none; /* hide inline img; using background-image instead for consistent full-bleed */
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 768px) {
+  .banner {
+    padding: 40px 0;
+  }
+
+  .banner-content {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .banner-title {
+    font-size: 32px;
+  }
+}
