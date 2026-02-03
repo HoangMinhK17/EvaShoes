@@ -414,6 +414,7 @@
 
 .qty-input[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Add to Cart Button */

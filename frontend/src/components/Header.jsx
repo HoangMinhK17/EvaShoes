@@ -1,9 +1,29 @@
 import '../styles/header.css';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { CartContext } from '../context/CartContext';
+import { AuthContext } from '../context/AuthContext';
+import AuthModal from './AuthModal';
+import { Link } from "react-router-dom";
 
 export default function Header() {
   const { cartItems, openCart } = useContext(CartContext);
+  const { user, logout } = useContext(AuthContext);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleAccountClick = (e) => {
+    e.preventDefault();
+    if (user) {
+      setShowUserMenu(!showUserMenu);
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+  };
 
   return (
     <header className="header">
@@ -25,14 +45,42 @@ export default function Header() {
             </ul>
             <div className="nav-icons">
               <a href="#search">🔍</a>
-              <a href="#account">👤</a>
+              <div className="account-icon-wrapper">
+                <button 
+                  
+                  className="account-btn"
+                  onClick={handleAccountClick}
+                  title={user ? `${user.username}` : 'Tài khoản'}
+                >
+                  👤
+                  {user && <span className="user-indicator"></span>}
+                </button>
+                {user && showUserMenu && (
+                  <div className="user-menu">
+                    <div className="user-menu-header">
+                      <p className="user-name">{user.username}</p>
+                      <p className="user-email">{user.email}</p>
+                    </div>
+                    <div className="user-menu-divider"></div>
+                    <a href="#profile" className="user-menu-item">👤 Tài khoản của tôi</a>
+                    <a href="#orders" className="user-menu-item">📦 Đơn hàng của tôi</a>
+                    <div className="user-menu-divider"></div>
+                    <button 
+                      className="user-menu-item logout-btn"
+                      onClick={handleLogout}
+                    >
+                      🚪 Đăng xuất
+                    </button>
+                  </div>
+                )}
+              </div>
               <a href="#wishlist">❤️</a>
-              <div className="cart-icon-wrapper" onClick={openCart}>
-                <a href="#cart">🛒</a>
+              <button className="cart-icon-wrapper" onClick={openCart}>
+                <Link to="/cart">🛒</Link>
                 {cartItems.length > 0 && (
                   <span className="cart-count">{cartItems.length}</span>
                 )}
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -49,6 +97,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </header>
   );
 }

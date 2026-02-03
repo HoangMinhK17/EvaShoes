@@ -28,8 +28,15 @@ const Cart = () => {
             </button>
 
             {showCart && (
-                <div className="cart-overlay" onClick={() => setShowCart(false)}>
-                    <div className="cart-modal" onClick={(e) => e.stopPropagation()}>
+                <>
+                    <div 
+                        aria-hidden="true"
+                        className="cart-overlay" 
+                        onClick={() => setShowCart(false)}
+                    />
+                    <div 
+                        className="cart-modal"
+                    >
                         <div className="cart-header">
                             <h2>🛒 Giỏ hàng của bạn</h2>
                             <button
@@ -52,7 +59,7 @@ const Cart = () => {
                                 <div className="cart-items-wrapper">
                                     <div className="cart-items">
                                         {cartItems.map((item, index) => (
-                                            <div key={index} className="cart-item">
+                                            <div key={`${item.product._id}-${item.color}-${item.size}`} className="cart-item">
                                                 <div className="item-image">
                                                     <img
                                                         src={item.product.imageUrl?.[0] || 'https://via.placeholder.com/80/E8E8E8/999999?text=No+Image'}
@@ -94,7 +101,7 @@ const Cart = () => {
                                                         type="number"
                                                         value={item.quantity}
                                                         onChange={(e) => {
-                                                            const newQty = parseInt(e.target.value) || 1;
+                                                            const newQty = Number.parseInt(e.target.value) || 1;
                                                             if (newQty > 0) {
                                                                 updateQuantity(
                                                                     item.product._id,
@@ -167,7 +174,7 @@ const Cart = () => {
                             </>
                         )}
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

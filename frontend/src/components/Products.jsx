@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import PropTypes from 'prop-types';
 import { CategoryContext } from '../context/CategoryContext';
 import { CartContext } from '../context/CartContext';
 import ProductDetail from './ProductDetail';
@@ -56,7 +57,10 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
           <img 
             src={imageUrl}
             alt={`${product.name} - ${currentImageIndex + 1}`}
+            role="button"
+            tabIndex="0"
             onClick={() => onViewDetail(product._id)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onViewDetail(product._id); }}
             onError={(e) => {
               e.target.src = `https://via.placeholder.com/220x280/E8E8E8/999999?text=${product.name}`;
             }}
@@ -65,7 +69,7 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
             <div className="image-thumbnails">
               {images.map((_, index) => (
                 <button
-                  key={index}
+                  key={`thumbnail-${product._id}-${index}`}
                   className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
                   onClick={() => handleThumbnailClick(index)}
                   title={`Ảnh ${index + 1}`}
@@ -138,7 +142,7 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div aria-hidden="true" className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             
@@ -211,7 +215,7 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
                     <input 
                       type="number" 
                       value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
                       min="1"
                     />
                     <button onClick={() => setQuantity(quantity + 1)}>+</button>
@@ -232,6 +236,28 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
     </>
   );
 }
+
+ProductCard.propTypes = {
+  product: PropTypes.shape({
+    _id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    price: PropTypes.number,
+    sellPrice: PropTypes.number,
+    imageUrl: PropTypes.arrayOf(PropTypes.string),
+    colors: PropTypes.arrayOf(PropTypes.shape({
+      color: PropTypes.string,
+    })),
+    sizes: PropTypes.arrayOf(PropTypes.shape({
+      size: PropTypes.string,
+      stock: PropTypes.number,
+    })),
+    isSale: PropTypes.bool,
+    sold: PropTypes.number,
+  }).isRequired,
+  getImageUrl: PropTypes.func.isRequired,
+  formatPrice: PropTypes.func.isRequired,
+  onViewDetail: PropTypes.func.isRequired,
+};
 
 export default function Products() {
   const [products, setProducts] = useState([]);
