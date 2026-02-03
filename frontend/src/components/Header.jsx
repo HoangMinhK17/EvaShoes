@@ -1,6 +1,10 @@
 import '../styles/header.css';
+import { useContext } from 'react';
+import { CartContext } from '../context/CartContext';
 
 export default function Header() {
+  const { cartItems, openCart } = useContext(CartContext);
+
   return (
     <header className="header">
   
@@ -23,7 +27,12 @@ export default function Header() {
               <a href="#search">🔍</a>
               <a href="#account">👤</a>
               <a href="#wishlist">❤️</a>
-              <a href="#cart">🛒</a>
+              <div className="cart-icon-wrapper" onClick={openCart}>
+                <a href="#cart">🛒</a>
+                {cartItems.length > 0 && (
+                  <span className="cart-count">{cartItems.length}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

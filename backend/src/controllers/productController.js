@@ -38,4 +38,16 @@ const getProductByCategoryId = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-export { getAllProducts, creatProduct, updateProduct, deleteProduct, getProductByCategoryId };
+
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findOne({ _id: req.params.id, isActive: true });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found2' });
+    }
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export { getAllProducts, creatProduct, updateProduct, deleteProduct, getProductByCategoryId, getProductById };

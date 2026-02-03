@@ -1,6 +1,7 @@
 import express from 'express';
 import categoryRoutes from './routes/categoryRouters.js';
 import productRoutes from './routes/productRouters.js';
+import userRoutes from './routes/userRouters.js';
 import connectDB from './config/db.js';
 
 import dotenv from 'dotenv';
@@ -21,7 +22,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
-app.use('/api/evashoes/', productRoutes, categoryRoutes);
+app.use('/api/evashoes/', productRoutes, categoryRoutes, userRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
