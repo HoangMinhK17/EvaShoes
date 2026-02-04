@@ -17,8 +17,18 @@ const creatCategory = async (req, res) => {
         res.status(500).json({ message: error.message });   
     }
 }
-const updateCategory = (req, res) => {
-  res.status(200).json({ message: 'Category updated successfully' });
+const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const updatedCategory = await Category.findByIdAndUpdate(id, updates, { new: true });
+    if (!updatedCategory) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    res.status(200).json(updatedCategory);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }    
 
 

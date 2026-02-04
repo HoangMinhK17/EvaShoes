@@ -2,6 +2,16 @@ import React, { useContext } from 'react';
 import { CartContext } from '../context/CartContext';
 import '../styles/cart.css';
 
+const API_BASE = 'http://localhost:3001';
+
+const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return 'https://via.placeholder.com/80/E8E8E8/999999?text=No+Image';
+    if (imageUrl.startsWith('/')) {
+      return `${API_BASE}${imageUrl}`;
+    }
+    return imageUrl;
+};
+
 const Cart = () => {
     const { 
         cartItems, 
@@ -62,7 +72,7 @@ const Cart = () => {
                                             <div key={`${item.product._id}-${item.color}-${item.size}`} className="cart-item">
                                                 <div className="item-image">
                                                     <img
-                                                        src={item.product.imageUrl?.[0] || 'https://via.placeholder.com/80/E8E8E8/999999?text=No+Image'}
+                                                        src={getImageUrl(item.product.imageUrl?.[0])}
                                                         alt={item.product.name}
                                                         onError={(e) => e.target.src = 'https://via.placeholder.com/80/E8E8E8/999999?text=No+Image'}
                                                     />

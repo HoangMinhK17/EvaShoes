@@ -116,7 +116,7 @@ export const CartProvider = ({ children }) => {
                     }
                 ];
             }
-
+            
             // Save to DB
             const totalPrice = newItems.reduce(
                 (sum, item) => sum + item.price * item.quantity,
