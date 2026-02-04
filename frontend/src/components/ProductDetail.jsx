@@ -72,7 +72,7 @@ function ProductDetail({ productId, onClose }) {
     }
 
     addToCart(product, quantity, selectedColor, selectedSize);
-  
+
     setQuantity(1);
   };
 
@@ -98,11 +98,11 @@ function ProductDetail({ productId, onClose }) {
     );
   }
 
-  const images = product.imageUrl && product.imageUrl.length > 0 
-    ? product.imageUrl 
+  const images = product.imageUrl && product.imageUrl.length > 0
+    ? product.imageUrl
     : ['placeholder'];
   const currentImage = images[currentImageIndex];
-  const imageUrl = currentImage === 'placeholder' 
+  const imageUrl = currentImage === 'placeholder'
     ? `https://via.placeholder.com/400x500/E8E8E8/999999?text=${product.name}`
     : getImageUrl(currentImage);
 
@@ -111,12 +111,12 @@ function ProductDetail({ productId, onClose }) {
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className="product-detail-modal" onClick={(e) => e.stopPropagation()}>
         <button className="detail-close-btn" onClick={onClose}>✕</button>
-        
+
         <div className="detail-container">
           {/* Left: Images */}
           <div className="detail-images">
             <div className="main-image">
-              <img 
+              <img
                 src={imageUrl}
                 alt={product.name}
                 onError={(e) => {
@@ -127,7 +127,7 @@ function ProductDetail({ productId, onClose }) {
                 <div className="sale-badge-detail">SALE</div>
               )}
             </div>
-            
+
             {images.length > 1 && (
               <div className="thumbnail-list">
                 {images.map((_, index) => (
@@ -136,7 +136,7 @@ function ProductDetail({ productId, onClose }) {
                     className={`thumbnail-item ${index === currentImageIndex ? 'active' : ''}`}
                     onClick={() => setCurrentImageIndex(index)}
                   >
-                    <img 
+                    <img
                       src={index === 0 ? imageUrl : getImageUrl(images[index])}
                       alt={`Thumbnail ${index + 1}`}
                       onError={(e) => {
@@ -152,7 +152,7 @@ function ProductDetail({ productId, onClose }) {
           {/* Right: Product Info */}
           <div className="detail-info">
             <h1 className="detail-product-name">{product.name}</h1>
-            
+
             <div className="detail-rating">
               <span className="stars">★★★★★</span>
               <span className="sold">({product.sold || 0} đã bán)</span>
@@ -183,7 +183,7 @@ function ProductDetail({ productId, onClose }) {
                     <h3>📋 Chi tiết sản phẩm</h3>
                     <div className="product-details-content">
                       {product.productDetails.split('\n').map((line, index) => (
-                        line.trim() && <p key={`line-${index}-${lines.length}`}>{line}</p>
+                        line.trim() && <p key={`detail-line-${index}`}>{line}</p>
                       ))}
                     </div>
                   </div>
@@ -238,20 +238,20 @@ function ProductDetail({ productId, onClose }) {
               {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <label className="section-label">Số lượng:</label>
               <div className="quantity-control">
-                <button 
+                <button
                   className="qty-btn"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 >
                   −
                 </button>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
                   min="1"
                   className="qty-input"
                 />
-                <button 
+                <button
                   className="qty-btn"
                   onClick={() => setQuantity(quantity + 1)}
                 >
@@ -261,7 +261,7 @@ function ProductDetail({ productId, onClose }) {
             </div>
 
             {/* Add to Cart Button */}
-            <button 
+            <button
               className="detail-add-to-cart-btn"
               onClick={handleAddToCart}
             >
