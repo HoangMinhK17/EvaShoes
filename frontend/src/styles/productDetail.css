@@ -543,3 +543,28 @@
     height: 80px;
   }
 }
+
+/* Stock Info Styles */
+.stock-info {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.out-of-stock-text {
+  color: #e74c3c;
+}
+
+.qty-btn:disabled {
+  background: #f0f0f0;
+  color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.qty-btn:disabled:hover {
+  background: #f0f0f0;
+}
+

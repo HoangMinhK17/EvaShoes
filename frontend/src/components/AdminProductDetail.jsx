@@ -19,7 +19,8 @@ function AdminProductDetail({ productId, onClose, onUpdate }) {
         category: '',
         colors: [],
         sizes: [],
-        isActive: true
+        isActive: true,
+        isSale: true,
     });
 
     useEffect(() => {
@@ -43,7 +44,8 @@ function AdminProductDetail({ productId, onClose, onUpdate }) {
                 category: data.category?._id || '',
                 colors: data.colors || [],
                 sizes: data.sizes || [],
-                isActive: data.isActive !== undefined ? data.isActive : true
+                isActive: data.isActive !== undefined ? data.isActive : true,
+                isSale: data.isSale !== undefined ? data.isSale : true,
             });
         } catch (error) {
             console.error('Error fetching product:', error);
@@ -504,6 +506,18 @@ function AdminProductDetail({ productId, onClose, onUpdate }) {
                                         disabled={!isEditMode}
                                     />
                                     <span>Sản phẩm hoạt động</span>
+                                </label>
+                            </div>
+                            <div className="admin-form-group checkbox-group">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="isSale"
+                                        checked={formData.isSale}
+                                        onChange={handleInputChange}
+                                        disabled={!isEditMode}
+                                    />
+                                    <span>Sản phẩm đang bán</span>
                                 </label>
                             </div>
 

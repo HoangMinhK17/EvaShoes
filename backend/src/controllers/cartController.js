@@ -9,7 +9,7 @@ const getCartItems = async (req, res) => {
         }
 
         const cartItems = await Cart.findOne({ user: idUser })
-            .populate('items.product', 'name price sellPrice imageUrl')
+            .populate('items.product', 'name price sellPrice imageUrl sizes colors isSale')
             .lean();
 
         if (!cartItems) {
@@ -57,7 +57,7 @@ const addItemToCart = async (req, res) => {
                 merged.set(key, {
                     ...cur,
                     quantity: (cur.quantity || 0) + (it.quantity || 0),
-                }); 
+                });
             }
         }
 
@@ -74,7 +74,7 @@ const addItemToCart = async (req, res) => {
             { user: idUser },
             { $set: { items: mergedItems, totalPrice: mergedTotal } },
             { new: true, upsert: true, setDefaultsOnInsert: true }
-        ); 
+        );
         if (cart) {
 
             return res.status(200).json({

@@ -69,12 +69,21 @@ export const CartProvider = ({ children }) => {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
+            // Transform items to send only product IDs to backend
+            const itemsForDB = items.map(item => ({
+                product: typeof item.product === 'object' ? item.product._id : item.product,
+                quantity: item.quantity,
+                price: item.price,
+                color: item.color,
+                size: item.size,
+            }));
+
             const response = await fetch(`${API_URL}/cart/add`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
                     userId,
-                    items,
+                    items: itemsForDB,
                     totalPrice,
                 }),
             });
@@ -108,7 +117,7 @@ export const CartProvider = ({ children }) => {
                 newItems = [
                     ...prevItems,
                     {
-                        product: product._id,
+                        product: product, // Store full product object instead of just ID
                         quantity,
                         price: product.sellPrice || product.price,
                         color,
@@ -116,7 +125,7 @@ export const CartProvider = ({ children }) => {
                     }
                 ];
             }
-            
+
             // Save to DB
             const totalPrice = newItems.reduce(
                 (sum, item) => sum + item.price * item.quantity,
@@ -128,21 +137,39 @@ export const CartProvider = ({ children }) => {
         });
     }, [auth?.user?._id, auth?.token, saveCartToDB]);
 
-    const removeFromCart = useCallback((productId, color = null, size = null) => {
+    const removeFromCart = useCallback(async (productId, color = null, size = null) => {
         setCartItems(prevItems => {
             const newItems = prevItems.filter(
                 item =>
                     !(item.product._id === productId &&
-                    item.color === color &&
-                    item.size === size)
+                        item.color === color &&
+                        item.size === size)
             );
 
-            // Save to DB
-            const totalPrice = newItems.reduce(
-                (sum, item) => sum + item.price * item.quantity,
-                0
-            );
-            saveCartToDB(newItems, totalPrice, auth?.user?._id, auth?.token);
+            // If cart is now empty, clear it from DB
+            if (newItems.length === 0) {
+                // Clear cart from database
+                if (auth?.user?._id) {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                    };
+                    if (auth?.token) {
+                        headers['Authorization'] = `Bearer ${auth.token}`;
+                    }
+                    fetch(`${API_URL}/cart/clear`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ userId: auth.user._id }),
+                    }).catch(error => console.error('Error clearing cart:', error));
+                }
+            } else {
+                // Save updated cart to DB
+                const totalPrice = newItems.reduce(
+                    (sum, item) => sum + item.price * item.quantity,
+                    0
+                );
+                saveCartToDB(newItems, totalPrice, auth?.user?._id, auth?.token);
+            }
 
             return newItems;
         });
@@ -155,8 +182,8 @@ export const CartProvider = ({ children }) => {
             setCartItems(prevItems => {
                 const newItems = prevItems.map(item =>
                     item.product._id === productId &&
-                    item.color === color &&
-                    item.size === size
+                        item.color === color &&
+                        item.size === size
                         ? { ...item, quantity }
                         : item
                 );

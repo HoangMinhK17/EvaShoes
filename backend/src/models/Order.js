@@ -44,10 +44,12 @@ const orderSchema = new mongoose.Schema({
         enum: ['cod', 'card', 'banking'],
         default: 'cod',
     },
-    isPaid: {
-        type: Boolean,
-        default: false,
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'paid', 'failed'],
+        default: 'pending',
     },
+
     shippingAddress: {
         fullName: String,
         phone: String,
@@ -62,6 +64,18 @@ const orderSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    cancelAt: {
+        type: Date,
+        default: null,
+    },
+    cancelReason: {
+        type: String,
+        default: null,
     },
 }, { timestamps: true });
 

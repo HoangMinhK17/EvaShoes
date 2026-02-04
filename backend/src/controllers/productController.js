@@ -74,7 +74,7 @@ const updateProduct = async (req, res) => {
 }
 
 const deleteProduct = (req, res) => {
-  res.status(200).json({ message: 'Product deleted successfully' });
+  
 }
 
 const getProductByCategoryId = async (req, res) => {

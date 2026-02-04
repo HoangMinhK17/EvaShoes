@@ -672,3 +672,28 @@
     font-size: 20px;
   }
 }
+
+/* Stock Info in Modal */
+.stock-info-modal {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.stock-info-modal.out-of-stock-text {
+  color: #e74c3c;
+}
+
+.quantity-selector button:disabled {
+  background: #f0f0f0;
+  color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.quantity-selector button:disabled:hover {
+  background: #f0f0f0;
+}
+

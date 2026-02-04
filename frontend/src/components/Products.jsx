@@ -17,8 +17,8 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
   const [showModal, setShowModal] = useState(false);
   const { addToCart } = useContext(CartContext);
 
-  const images = product.imageUrl && product.imageUrl.length > 0 
-    ? product.imageUrl 
+  const images = product.imageUrl && product.imageUrl.length > 0
+    ? product.imageUrl
     : ['placeholder'];
 
   const handleThumbnailClick = (index) => {
@@ -26,9 +26,28 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
   };
 
   const currentImage = images[currentImageIndex];
-  const imageUrl = currentImage === 'placeholder' 
+  const imageUrl = currentImage === 'placeholder'
     ? `https://via.placeholder.com/220x280/E8E8E8/999999?text=${product.name}`
     : getImageUrl(currentImage);
+
+  // Get max stock based on selected size or total stock
+  const getMaxStock = () => {
+    if (!product) return 0;
+
+    // If product has sizes, get stock from selected size
+    if (product.sizes && product.sizes.length > 0) {
+      if (selectedSize) {
+        const sizeObj = product.sizes.find(s => s.size === selectedSize);
+        return sizeObj ? sizeObj.stock : 0;
+      }
+      return 0; // No size selected yet
+    }
+
+    // If no sizes (like bags), use default stock
+    return 999;
+  };
+
+  const maxStock = getMaxStock();
 
   const handleAddToCart = () => {
     // Kiểm tra xem sản phẩm có yêu cầu chọn size không
@@ -43,6 +62,17 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
       return;
     }
 
+    // Validate quantity against stock
+    if (quantity > maxStock) {
+      alert(`❌ Số lượng không được vượt quá ${maxStock} sản phẩm có sẵn!`);
+      return;
+    }
+
+    if (maxStock === 0) {
+      alert('❌ Sản phẩm này hiện đã hết hàng!');
+      return;
+    }
+
     addToCart(product, quantity, selectedColor, selectedSize);
     setShowModal(false);
     setQuantity(1);
@@ -54,7 +84,7 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
     <>
       <div className="product-card">
         <div className="product-image">
-          <img 
+          <img
             src={imageUrl}
             alt={`${product.name} - ${currentImageIndex + 1}`}
             role="button"
@@ -81,13 +111,13 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
             <div className="sale-badge">SALE</div>
           )}
           <div className="product-overlay">
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => setShowModal(true)}
             >
               THÊM VÀO GIỎ
             </button>
-            <button 
+            <button
               className="btn btn-secondary"
               onClick={() => onViewDetail(product._id)}
             >
@@ -145,10 +175,10 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
         <div aria-hidden="true" className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
-            
+
             <div className="modal-body">
               <div className="modal-image">
-                <img 
+                <img
                   src={imageUrl}
                   alt={product.name}
                   onError={(e) => {
@@ -211,23 +241,49 @@ function ProductCard({ product, getImageUrl, formatPrice, onViewDetail }) {
                 <div className="modal-section">
                   <label>Số lượng:</label>
                   <div className="quantity-selector">
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
-                    <input 
-                      type="number" 
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
                       value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                      onChange={(e) => {
+                        const value = Number.parseInt(e.target.value) || 1;
+                        setQuantity(Math.min(Math.max(1, value), maxStock));
+                      }}
                       min="1"
+                      max={maxStock}
                     />
-                    <button onClick={() => setQuantity(quantity + 1)}>+</button>
+                    <button
+                      onClick={() => setQuantity(Math.min(quantity + 1, maxStock))}
+                      disabled={quantity >= maxStock}
+                    >
+                      +
+                    </button>
                   </div>
+                  {maxStock > 0 && (
+                    <small className="stock-info-modal">Còn {maxStock} sản phẩm</small>
+                  )}
+                  {maxStock === 0 && (
+                    <small className="stock-info-modal out-of-stock-text">Hết hàng</small>
+                  )}
                 </div>
 
-                <button 
-                  className="btn-add-to-cart"
-                  onClick={handleAddToCart}
-                >
-                  THÊM VÀO GIỎ
-                </button>
+                {product.isSale === false ? (
+                  <div className="product-stopped-business-modal">
+                    <p>Sản phẩm này đã ngừng kinh doanh</p>
+                  </div>
+                ) : (
+                  <button
+                    className="btn-add-to-cart"
+                    onClick={handleAddToCart}
+                  >
+                    THÊM VÀO GIỎ
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -321,10 +377,10 @@ export default function Products() {
 
   return (
     <section className="products" id="products">
-      <h2  className="section-title" style={{textAlign: 'center'}}>SẢN PHẨM & XU HƯỚNG</h2>
-      
+      <h2 className="section-title" style={{ textAlign: 'center' }}>SẢN PHẨM & XU HƯỚNG</h2>
+
       <div className="filter-tabs">
-        <button 
+        <button
           className={`filter-btn ${!selectedCategory ? 'active' : ''}`}
           onClick={handleShowAll}
         >
@@ -340,8 +396,8 @@ export default function Products() {
       ) : (
         <div className="products-grid">
           {displayProducts.map((product) => (
-            <ProductCard 
-              key={product._id} 
+            <ProductCard
+              key={product._id}
               product={product}
               getImageUrl={getImageUrl}
               formatPrice={formatPrice}
@@ -352,9 +408,9 @@ export default function Products() {
       )}
 
       {selectedProductId && (
-        <ProductDetail 
-          productId={selectedProductId} 
-          onClose={() => setSelectedProductId(null)} 
+        <ProductDetail
+          productId={selectedProductId}
+          onClose={() => setSelectedProductId(null)}
         />
       )}
     </section>

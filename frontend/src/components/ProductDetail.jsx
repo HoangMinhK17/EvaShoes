@@ -58,6 +58,30 @@ function ProductDetail({ productId, onClose }) {
     return imageUrl;
   };
 
+  // Get max stock based on selected size or total stock
+  const getMaxStock = () => {
+    if (!product) return 0;
+
+    // If product has sizes, get stock from selected size
+    if (product.sizes && product.sizes.length > 0) {
+      if (selectedSize) {
+        const sizeObj = product.sizes.find(s => s.size === selectedSize);
+        return sizeObj ? sizeObj.stock : 0;
+      }
+      return 0; // No size selected yet
+    }
+
+    // If no sizes (like bags), calculate total stock from all sizes or use a default
+    if (product.sizes && product.sizes.length > 0) {
+      return product.sizes.reduce((total, size) => total + (size.stock || 0), 0);
+    }
+
+    // Default stock if no size information
+    return 999;
+  };
+
+  const maxStock = getMaxStock();
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -68,6 +92,17 @@ function ProductDetail({ productId, onClose }) {
 
     if (product.colors && product.colors.length > 0 && !selectedColor) {
       alert('❌ Vui lòng chọn màu!');
+      return;
+    }
+
+    // Validate quantity against stock
+    if (quantity > maxStock) {
+      alert(`❌ Số lượng không được vượt quá ${maxStock} sản phẩm có sẵn!`);
+      return;
+    }
+
+    if (maxStock === 0) {
+      alert('❌ Sản phẩm này hiện đã hết hàng!');
       return;
     }
 
@@ -241,32 +276,51 @@ function ProductDetail({ productId, onClose }) {
                 <button
                   className="qty-btn"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
                 >
                   −
                 </button>
                 <input
                   type="number"
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const value = Number.parseInt(e.target.value) || 1;
+                    setQuantity(Math.min(Math.max(1, value), maxStock));
+                  }}
                   min="1"
+                  max={maxStock}
                   className="qty-input"
                 />
                 <button
                   className="qty-btn"
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(quantity + 1, maxStock))}
+                  disabled={quantity >= maxStock}
                 >
                   +
                 </button>
               </div>
+              {maxStock > 0 && (
+                <small className="stock-info">Còn {maxStock} sản phẩm</small>
+              )}
+              {maxStock === 0 && (
+                <small className="stock-info out-of-stock-text">Hết hàng</small>
+              )}
             </div>
 
             {/* Add to Cart Button */}
-            <button
-              className="detail-add-to-cart-btn"
-              onClick={handleAddToCart}
-            >
-              🛒 THÊM VÀO GIỎ HÀNG
-            </button>
+            {/* Add to Cart Button */}
+            {product.isSale === false ? (
+              <div className="product-stopped-business">
+                <p>Sản phẩm này đã ngừng kinh doanh</p>
+              </div>
+            ) : (
+              <button
+                className="detail-add-to-cart-btn"
+                onClick={handleAddToCart}
+              >
+                🛒 THÊM VÀO GIỎ HÀNG
+              </button>
+            )}
 
             {/* Additional Info */}
             <div className="detail-footer-info">
