@@ -27,7 +27,7 @@ export default function Header() {
 
   return (
     <header className="header">
-  
+
 
       <nav className="navbar">
         <div className="container">
@@ -36,18 +36,18 @@ export default function Header() {
               <h1>EVASHOES</h1>
             </div>
             <ul className="nav-links">
-              <li><a href="#home">HÀNG MỚI</a></li>
-              <li><a href="#products">SẢN PHẨM</a></li>
-              <li><a href="#sale">SALE</a></li>
-              <li><a href="#collection">COLLECTION</a></li>
-              <li><a href="#support">HỖ TRỢ</a></li>
-              <li><a href="#blog">BLOG</a></li>
+              <li><Link to="/#home">HÀNG MỚI</Link></li>
+              <li><Link to="/#products">SẢN PHẨM</Link></li>
+              <li><Link to="/#sale">SALE</Link></li>
+              <li><Link to="/#collection">COLLECTION</Link></li>
+              <li><Link to="/#support">HỖ TRỢ</Link></li>
+              <li><Link to="/#blog">BLOG</Link></li>
             </ul>
             <div className="nav-icons">
               <a href="#search">🔍</a>
               <div className="account-icon-wrapper">
-                <button 
-                  
+                <button
+
                   className="account-btn"
                   onClick={handleAccountClick}
                   title={user ? `${user.username}` : 'Tài khoản'}
@@ -62,10 +62,12 @@ export default function Header() {
                       <p className="user-email">{user.email}</p>
                     </div>
                     <div className="user-menu-divider"></div>
-                    <a href="#profile" className="user-menu-item">👤 Tài khoản của tôi</a>
-                    <a href="#orders" className="user-menu-item">📦 Đơn hàng của tôi</a>
+                    <Link to="/profile" className="user-menu-item">👤 Tài khoản của tôi</Link>
+                    <Link to="/my-orders" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
+                      📦 Đơn hàng của tôi
+                    </Link>
                     <div className="user-menu-divider"></div>
-                    <button 
+                    <button
                       className="user-menu-item logout-btn"
                       onClick={handleLogout}
                     >

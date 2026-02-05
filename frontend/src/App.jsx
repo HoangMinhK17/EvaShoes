@@ -10,7 +10,10 @@ import { CategoryProvider } from './context/CategoryContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import './styles/global.css';
-import  {useNavigate} from "react-router-dom";
+import { useNavigate, Routes, Route } from "react-router-dom";
+import Checkout from "./components/Checkout";
+import MyOrders from "./components/MyOrders";
+import UserInfo from "./components/UserInfo";
 function AppContent() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -23,11 +26,20 @@ function AppContent() {
   return (
     <>
       <Header />
-      <Banner />
-      <div className="main-content">
-        <Categories />
-        <Products />
-      </div>
+      <Routes>
+        <Route path="/" element={
+          <>
+            <Banner />
+            <div className="main-content">
+              <Categories />
+              <Products />
+            </div>
+          </>
+        } />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/my-orders" element={<MyOrders />} />
+        <Route path="/profile" element={<UserInfo />} />
+      </Routes>
       <Cart />
       <Footer />
     </>

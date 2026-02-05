@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchCategoryTerm, setSearchCategoryTerm] = useState('');
   const [searchProductTerm, setSearchProductTerm] = useState('');
+  const [searchOrderTerm, setSearchOrderTerm] = useState('');
+
   // User modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -48,6 +50,14 @@ export default function AdminDashboard() {
   // Add Product modal state
   const [showAddProductModal, setShowAddProductModal] = useState(false);
 
+  // Order management state
+  const [orders, setOrders] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
   useEffect(() => {
     fetchStats();
   }, []);
@@ -99,6 +109,22 @@ export default function AdminDashboard() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== "orders") return;
+
+    const delay = setTimeout(() => {
+      searchOrder(searchOrderTerm);
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [searchOrderTerm]);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [activeTab, selectedStatus]);
+
   const fetchStats = async () => {
     try {
       setStats({
@@ -109,6 +135,31 @@ export default function AdminDashboard() {
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = selectedStatus === 'all'
+        ? `${API_BASE}/orders`
+        : `${API_BASE}/orders?status=${selectedStatus}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (response.ok) {
+        setOrders(Array.isArray(data) ? data : []);
+        console.log('Fetched orders:', data);
+      } else {
+        setError(data.message || 'Không thể tải danh sách đơn hàng');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setError('Lỗi kết nối đến server');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -299,6 +350,113 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  const searchOrder = async (keyword) => {
+    try {
+      setLoading(true);
+      if (!keyword || !keyword.trim()) {
+        fetchOrders();
+        return;
+      }
+      const res = await fetch(`${API_BASE}/orders/search/${keyword}`);
+      const data = await res.json();
+
+      setOrders(Array.isArray(data) ? data : (data.orders || []));
+
+    } catch (error) {
+      console.error('Error searching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, newStatus, confirmMessage) => {
+    // If cancelling, show modal instead of proceeding directly
+    if (newStatus === 'cancelled') {
+      setCancelOrderId(orderId);
+      setCancelReason('');
+      setShowCancelModal(true);
+      return;
+    }
+
+    if (!window.confirm(confirmMessage || `Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(`${API_BASE}/orders/updateStatus/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể cập nhật trạng thái đơn hàng');
+      }
+
+      alert('Cập nhật trạng thái đơn hàng thành công!');
+      fetchOrders(); // Refresh orders list
+
+      // If order detail modal is open, close it to avoid stale data
+      if (showOrderDetail) {
+        setShowOrderDetail(false);
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert('Có lỗi xảy ra khi cập nhật trạng thái: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleConfirmCancel = async () => {
+    if (!cancelReason.trim()) {
+      alert('Vui lòng nhập lý do hủy đơn hàng!');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(`${API_BASE}/orders/updateStatus/${cancelOrderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: 'cancelled',
+          cancelReason: cancelReason.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể cập nhật trạng thái đơn hàng');
+      }
+
+      alert('Đơn hàng đã được hủy thành công!');
+      setShowCancelModal(false);
+      setCancelOrderId(null);
+      setCancelReason('');
+      fetchOrders(); // Refresh orders list
+
+      // If order detail modal is open, close it to avoid stale data
+      if (showOrderDetail) {
+        setShowOrderDetail(false);
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert('Có lỗi xảy ra khi cập nhật trạng thái: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // Category handlers
   const handleOpenCategoryModal = (category = null) => {
     if (category) {
@@ -441,6 +599,24 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error saving product:', error);
+      alert('Lỗi kết nối đến server');
+    }
+  };
+
+  // Fetch order detail by ID
+  const fetchOrderDetail = async (orderId) => {
+    try {
+      const response = await fetch(`${API_BASE}/orders/${orderId}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setSelectedOrder(data);
+        setShowOrderDetail(true);
+      } else {
+        alert(data.message || 'Không thể tải chi tiết đơn hàng');
+      }
+    } catch (error) {
+      console.error('Error fetching order detail:', error);
       alert('Lỗi kết nối đến server');
     }
   };
@@ -616,7 +792,7 @@ export default function AdminDashboard() {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Quản Lí Sản Phẩm</h2>
-                  <input type="text" placeholder="🔍 Tìm kiếm sản phẩm..." className="search-input" value={searchProductTerm} onChange={(e) => setSearchProductTerm(e.target.value)} />
+                <input type="text" placeholder="🔍 Tìm kiếm sản phẩm..." className="search-input" value={searchProductTerm} onChange={(e) => setSearchProductTerm(e.target.value)} />
                 <button className="btn-primary" onClick={handleOpenAddProductModal}>+ Thêm Sản Phẩm</button>
               </div>
 
@@ -861,16 +1037,130 @@ export default function AdminDashboard() {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Quản Lí Đơn Hàng</h2>
-                <select className="filter-select">
-                  <option>Tất Cả Trạng Thái</option>
-                  <option>Đã Giao</option>
-                  <option>Đang Xử Lý</option>
-                  <option>Chờ Xác Nhận</option>
+                <input type="text" placeholder="🔍 Tìm kiếm (mã đơn, tên, sđt) ..." className="search-input" value={searchOrderTerm} onChange={(e) => setSearchOrderTerm(e.target.value)} />
+                <select
+                  className="filter-select"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                  <option value="all">Tất Cả Trạng Thái</option>
+                  <option value="pending">Chờ xử lý</option>
+                  <option value="confirmed">Đã xác nhận</option>
+                  <option value="shipped">Đang giao</option>
+                  <option value="delivered">Đã giao</option>
+                  <option value="cancelled">Đã hủy</option>
                 </select>
               </div>
-              <div className="placeholder-content">
-                <p>📦 Danh sách đơn hàng sẽ được hiển thị tại đây</p>
-              </div>
+
+              {loading && (
+                <div className="loading-state">
+                  <p>⏳ Đang tải danh sách đơn hàng...</p>
+                </div>
+              )}
+
+              {error && (
+                <div className="error-state">
+                  <p>❌ {error}</p>
+                  <button className="btn-retry" onClick={fetchOrders}>Thử lại</button>
+                </div>
+              )}
+
+              {!loading && !error && orders.length === 0 && (
+                <div className="empty-state">
+                  <p>📦 Chưa có đơn hàng nào</p>
+                </div>
+              )}
+
+              {!loading && !error && orders.length > 0 && (
+                <div className="orders-list">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Mã Đơn Hàng</th>
+                        <th>Khách Hàng</th>
+                        <th>Số điện thoại</th>
+
+                        <th>Tổng Tiền</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Đặt</th>
+                        <th>Hành Động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map((order) => (
+                        <tr key={order._id}>
+                          <td>
+                            <strong>#{order.codeOrder}</strong>
+                          </td>
+                          <td>
+                            <div className="customer-info">
+                              <strong>{order.user?.username || order.shippingAddress?.fullName || 'N/A'}</strong>
+                              <small>{order.user?.email || ''}</small>
+                            </div>
+                          </td>
+                          <td>
+                            <strong>{order.shippingAddress?.phone || 'N/A'}</strong>
+                          </td>
+                          <td>
+                            <strong>{order.totalPrice.toLocaleString('vi-VN')}₫</strong>
+                          </td>
+                          <td>
+                            <span className={`badge-${order.status}`}>
+                              {order.status === 'pending' && 'Chờ xử lý'}
+                              {order.status === 'confirmed' && 'Đã xác nhận'}
+                              {order.status === 'shipped' && 'Đang giao'}
+                              {order.status === 'delivered' && 'Đã giao'}
+                              {order.status === 'cancelled' && 'Đã hủy'}
+                            </span>
+                          </td>
+                          <td>
+                            {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="btn-view"
+                                title="Xem chi tiết"
+                                onClick={() => fetchOrderDetail(order._id)}
+                              >
+                                👁️
+                              </button>
+                              <div className='status-action'>
+                                {order.status === 'pending' && (
+                                  <>
+                                    <button className="btn-status btn-confirm"
+                                      onClick={() => handleUpdateOrderStatus(order._id, 'confirmed', 'Xác nhận đơn hàng này?')}>Xác nhận đơn</button>
+                                    <button className="btn-status btn-cancel"
+                                      onClick={() => handleUpdateOrderStatus(order._id, 'cancelled', 'Hủy đơn hàng này?')}>Hủy đơn</button>
+
+                                  </>
+                                )}
+                                {order.status === 'confirmed' && (
+                                  <button
+                                    className="btn-status btn-ship"
+                                    onClick={() => handleUpdateOrderStatus(order._id, 'shipped', 'Chuyển đơn hàng sang trạng thái đang giao?')}
+                                  >
+                                    Đang giao hàng
+                                  </button>
+                                )}
+
+                                {order.status === 'shipped' && (
+                                  <button
+                                    className="btn-status btn-deliver"
+                                    onClick={() => handleUpdateOrderStatus(order._id, 'delivered', 'Xác nhận đơn hàng đã được giao?')}
+                                  >
+                                    Đã giao hàng
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -1034,6 +1324,220 @@ export default function AdminDashboard() {
         onSave={handleSaveProduct}
         categories={categories}
       />
+
+      {/* Order Detail Modal */}
+      {showOrderDetail && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowOrderDetail(false)}>
+          <div className="modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Chi Tiết Đơn Hàng #{selectedOrder.codeOrder}</h2>
+              <button className="modal-close" onClick={() => setShowOrderDetail(false)}>×</button>
+            </div>
+
+            <div className="modal-form">
+              {/* Customer Info */}
+              <div className="order-detail-section">
+                <h3>Thông Tin Khách Hàng</h3>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <label>Họ tên:</label>
+                    <span>{selectedOrder.shippingAddress?.fullName || 'N/A'}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Số điện thoại:</label>
+                    <span>{selectedOrder.shippingAddress?.phone || 'N/A'}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Email:</label>
+                    <span>{selectedOrder.user?.email || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div className="order-detail-section">
+                <h3>Địa Chỉ Giao Hàng</h3>
+                <p>{selectedOrder.shippingAddress?.address}, {selectedOrder.shippingAddress?.ward}, {selectedOrder.shippingAddress?.district}, {selectedOrder.shippingAddress?.city}</p>
+              </div>
+
+              {/* Order Items */}
+              <div className="order-detail-section">
+                <h3>Sản Phẩm ({selectedOrder.items?.length || 0})</h3>
+                <table className="order-items-table">
+                  <thead>
+                    <tr>
+                      <th>Sản phẩm</th>
+                      <th>Màu</th>
+                      <th>Size</th>
+                      <th>Số lượng</th>
+                      <th>Đơn giá</th>
+                      <th>Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.items?.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.product?.name || 'N/B'}</td>
+                        <td>{item.color}</td>
+                        <td>{item.size}</td>
+                        <td>{item.quantity}</td>
+                        <td>{item.price.toLocaleString('vi-VN')}₫</td>
+                        <td><strong>{(item.price * item.quantity).toLocaleString('vi-VN')}₫</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Order Summary */}
+              <div className="order-detail-section">
+                <div className="order-summary">
+                  <div className="summary-row">
+                    <label>Phương thức thanh toán:</label>
+                    <span>{selectedOrder.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : selectedOrder.paymentMethod}</span>
+                  </div>
+                  <div className="summary-row">
+                    <label>Trạng thái thanh toán:</label>
+                    <span className={`badge-${selectedOrder.paymentStatus}`}>
+                      {selectedOrder.paymentStatus === 'pending' && 'Chờ thanh toán'}
+                      {selectedOrder.paymentStatus === 'paid' && 'Đã thanh toán'}
+                      {selectedOrder.paymentStatus === 'failed' && 'Thất bại'}
+                    </span>
+                  </div>
+                  <div className="summary-row">
+                    <label>Ngày đặt:</label>
+                    <span>{new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}</span>
+                  </div>
+                  {selectedOrder.notes && (
+                    <div className="summary-row">
+                      <label>Ghi chú:</label>
+                      <span>{selectedOrder.notes}</span>
+                    </div>
+                  )}
+                  <div className="summary-row total">
+                    <label>Tổng tiền:</label>
+                    <span className="total-amount">{selectedOrder.totalPrice.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Update */}
+              <div className="order-detail-section">
+                <h3>Cập Nhật Trạng Thái</h3>
+                <div className="status-update">
+                  <label>Trạng thái hiện tại:</label>
+                  <span className={`badge-${selectedOrder.status}`}>
+                    {selectedOrder.status === 'pending' && 'Chờ xử lý'}
+                    {selectedOrder.status === 'confirmed' && 'Đã xác nhận'}
+                    {selectedOrder.status === 'shipped' && 'Đang giao'}
+                    {selectedOrder.status === 'delivered' && 'Đã giao'}
+                    {selectedOrder.status === 'cancelled' && 'Đã hủy'}
+                  </span>
+                </div>
+                <div className="status-update">
+                  
+                  {selectedOrder.status === 'cancelled' && (  
+                    <>
+                     <div>
+
+                        <label>Lí do hủy:</label> 
+                    
+                    <span>{selectedOrder.cancelReason ? selectedOrder.cancelReason : 'Không có lý do hủy'}.</span> 
+                     </div>
+                  
+
+                    <div>
+                      <label>Ngày hủy:</label>
+                      <span>{selectedOrder.cancelAt ? new Date(selectedOrder.cancelAt).toLocaleString('vi-VN') : 'N/A'}.</span>
+                    </div>
+                    </>
+                    
+                  )}
+
+                  {
+                    selectedOrder.status === 'delivered' && (
+                      <>
+                        <div>
+                          <label>Đã giao hàng vào lúc : </label>
+                          <span>{selectedOrder.deliveredAt ? new Date(selectedOrder.deliveredAt).toLocaleString('vi-VN') : 'N/A'}</span>
+                        </div>
+                      </>
+                    )
+                  }
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Cancel Reason Modal */}
+      {showCancelModal && (
+        <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Hủy Đơn Hàng</h2>
+              <button className="modal-close" onClick={() => setShowCancelModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: '15px', color: '#666' }}>
+                Vui lòng nhập lý do hủy đơn hàng này:
+              </p>
+              <textarea
+                className="cancel-reason-input"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Nhập lý do hủy đơn hàng..."
+                rows="4"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setShowCancelModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  background: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                className="btn-confirm-cancel"
+                onClick={handleConfirmCancel}
+                style={{
+                  padding: '10px 10px',
+                  border: 'none',
+                  marginRight: '25px',
+                  borderRadius: '8px',
+                  background: '#dc3545',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Xác Nhận Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

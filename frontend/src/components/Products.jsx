@@ -318,6 +318,7 @@ ProductCard.propTypes = {
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { selectedCategory, setSelectedCategory } = useContext(CategoryContext);
 
   const fetchProducts = async () => {
@@ -345,12 +346,41 @@ export default function Products() {
   };
 
   useEffect(() => {
+    setSearchTerm('');
     if (selectedCategory) {
       fetchProductsByCategory(selectedCategory);
     } else {
       fetchProducts();
     }
   }, [selectedCategory]);
+
+  const searchProducts = async (keyword) => {
+    try {
+      const response = await fetch(`${API_URL}/products/searchByName/${keyword}`);
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error searching products:', error);
+      setProducts([]);
+    }
+  };
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchProducts(searchTerm);
+      } else {
+        if (selectedCategory) {
+          fetchProductsByCategory(selectedCategory);
+        } else {
+          fetchProducts();
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [searchTerm]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -375,9 +405,33 @@ export default function Products() {
     setSelectedCategory(null);
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+
   return (
     <section className="products" id="products">
       <h2 className="section-title" style={{ textAlign: 'center' }}>SẢN PHẨM & XU HƯỚNG</h2>
+
+      <div className="search-container" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <input
+          type="text"
+          placeholder="🔍 Tìm kiếm sản phẩm..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          style={{
+            padding: '10px 15px',
+            width: '100%',
+            maxWidth: '400px',
+            borderRadius: '25px',
+            border: '1px solid #ddd',
+            outline: 'none',
+            fontSize: '16px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+          }}
+        />
+      </div>
 
       <div className="filter-tabs">
         <button

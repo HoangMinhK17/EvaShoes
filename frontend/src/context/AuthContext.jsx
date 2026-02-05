@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   // Kiểm tra xem user có lưu trong localStorage không khi mount
   useEffect(() => {
@@ -21,6 +22,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('token');
       }
     }
+    setIsCheckingSession(false);
   }, []);
 
   const login = async (email, password) => {
@@ -105,7 +107,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, error, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, error, isCheckingSession, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

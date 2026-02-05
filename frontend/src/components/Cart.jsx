@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
 import '../styles/cart.css';
 
@@ -13,6 +14,7 @@ const getImageUrl = (imageUrl) => {
 };
 
 const Cart = () => {
+    const navigate = useNavigate();
     const {
         cartItems,
         removeFromCart,
@@ -286,7 +288,9 @@ const Cart = () => {
                                                 if (selectedItems.size === 0) {
                                                     alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán!');
                                                 } else {
-                                                    alert('Tính năng thanh toán đang được phát triển');
+                                                    const itemsToCheckout = cartItems.filter((_, index) => selectedItems.has(index));
+                                                    setShowCart(false);
+                                                    navigate('/checkout', { state: { items: itemsToCheckout } });
                                                 }
                                             }}
                                             disabled={selectedItems.size === 0}

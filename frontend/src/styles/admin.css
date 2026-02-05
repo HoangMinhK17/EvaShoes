@@ -614,6 +614,68 @@
   font-weight: 600;
 }
 
+/* Order Status Badges */
+.badge-confirmed {
+  background: #cce5ff;
+  color: #004085;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-shipped {
+  background: #d1ecf1;
+  color: #0c5460;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-delivered {
+  background: #d4edda;
+  color: #155724;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-cancelled {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Customer Info */
+.customer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customer-info strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.customer-info small {
+  color: #666;
+  font-size: 12px;
+}
+
+/* Orders List */
+.orders-list {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 /* Product List Styles */
 .products-list {
   background: white;
@@ -921,6 +983,7 @@
 
 
 }
+
 /* Image Upload and Preview Styles */
 .form-hint {
   display: block;
@@ -1064,3 +1127,183 @@
   transform: scale(1.1);
 }
 
+/* Order Detail Modal Styles */
+.order-detail-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.order-detail-section:last-child {
+  border-bottom: none;
+}
+
+.order-detail-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-item label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item span {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.order-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.order-items-table thead {
+  background: #f5f7fa;
+}
+
+.order-items-table th {
+  padding: 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.order-items-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 13px;
+  color: #555;
+}
+
+.order-items-table tr:hover {
+  background: #f9f9f9;
+}
+
+.order-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.summary-row label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.summary-row span {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.summary-row.total {
+  border-top: 2px solid #e0e0e0;
+  padding-top: 15px;
+  margin-top: 10px;
+}
+
+.summary-row.total label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.total-amount {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #ff6b6b !important;
+}
+
+.status-update {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.status-update label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.status-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-status {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+  color: white;
+}
+
+.btn-confirm {
+  background: #3498db;
+}
+
+.btn-confirm:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+
+.btn-ship {
+  background: #9b59b6;
+}
+
+.btn-ship:hover {
+  background: #8e44ad;
+  transform: translateY(-2px);
+}
+
+.btn-deliver {
+  background: #27ae60;
+}
+
+.btn-deliver:hover {
+  background: #229954;
+  transform: translateY(-2px);
+}
+
+.btn-cancel {
+  background: #e74c3c;
+}
+
+.btn-cancel:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}

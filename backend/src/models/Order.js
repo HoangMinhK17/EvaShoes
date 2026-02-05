@@ -41,8 +41,8 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['cod', 'card', 'banking'],
-        default: 'cod',
+        enum: ['COD', 'card', 'banking'],
+        default: 'COD',
     },
     paymentStatus: {
         type: String,
@@ -55,8 +55,8 @@ const orderSchema = new mongoose.Schema({
         phone: String,
         address: String,
         city: String,
-        ward: String,
         district: String,
+        ward: String,
     },
     notes: {
         type: String,
@@ -75,6 +75,14 @@ const orderSchema = new mongoose.Schema({
     },
     cancelReason: {
         type: String,
+        default: null,
+    },
+    codeOrder: {
+        type: String,
+        default: null,
+    },
+    deliveredAt: {
+        type: Date,
         default: null,
     },
 }, { timestamps: true });
