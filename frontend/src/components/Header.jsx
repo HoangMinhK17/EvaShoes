@@ -7,8 +7,7 @@ import { Link } from "react-router-dom";
 
 export default function Header() {
   const { cartItems, openCart } = useContext(CartContext);
-  const { user, logout } = useContext(AuthContext);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, logout, showAuthModal, setShowAuthModal } = useContext(AuthContext); // Use global state
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleAccountClick = (e) => {
@@ -77,7 +76,7 @@ export default function Header() {
                 )}
               </div>
               <a href="#wishlist">❤️</a>
-              <button className="cart-icon-wrapper" onClick={openCart}>
+              <button className="cart-icon-wrapper" onClick={openCart} >
                 <Link to="/cart">🛒</Link>
                 {cartItems.length > 0 && (
                   <span className="cart-count">{cartItems.length}</span>

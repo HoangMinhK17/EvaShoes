@@ -24,7 +24,7 @@ const loginUser = async (req, res) => {
         const token = jwt.sign(
             { userId: user._id, email: user.email, role: user.role },
             secret,
-            { expiresIn: '1d' }
+            { expiresIn: '1h' }
         );
 
         return res.status(200).json({
@@ -85,25 +85,25 @@ const updateUser = async (req, res) => {
 };
 
 const findUserByNameOrEmail = async (req, res) => {
-  const { keyword } = req.params;
+    const { keyword } = req.params;
 
-  try {
-    // nếu không nhập gì -> trả tất cả users (tuỳ bạn muốn)
-    if (!keyword || !keyword.trim()) {
-      const users = await User.find();
-      return res.status(200).json(users);
+    try {
+        // nếu không nhập gì -> trả tất cả users (tuỳ bạn muốn)
+        if (!keyword || !keyword.trim()) {
+            const users = await User.find();
+            return res.status(200).json(users);
+        }
+
+        const regex = new RegExp(keyword.trim(), "i");
+
+        const users = await User.find({
+            $or: [{ username: regex }, { email: regex }],
+        });
+
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Error searching users", error });
     }
-
-    const regex = new RegExp(keyword.trim(), "i");
-
-    const users = await User.find({
-      $or: [{ username: regex }, { email: regex }],
-    });
-
-    res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ message: "Error searching users", error });
-  }
 };
 const deleteUser = async (req, res) => {
 };
@@ -122,6 +122,28 @@ const getUserByToken = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: "Invalid password" });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
+        const hashPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashPassword;
+        await user.save();
+        res.status(200).json({ message: "Password changed successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
-export { loginUser, registerUser, getAllUsers, updateUser, deleteUser, findUserByNameOrEmail, getUserByToken };
+export { loginUser, registerUser, getAllUsers, updateUser, deleteUser, findUserByNameOrEmail, getUserByToken, changePassword };

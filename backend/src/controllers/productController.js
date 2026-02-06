@@ -3,7 +3,7 @@ import Product from "../models/Product.js";
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({}).populate('category', 'name');
+    const products = await Product.find({isActive: true}).populate('category', 'name').sort({ createdAt: -1 });
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -79,7 +79,7 @@ const deleteProduct = (req, res) => {
 
 const getProductByCategoryId = async (req, res) => {
   try {
-    const product = await Product.find({ category: req.params.id, isActive: true });
+    const product = await Product.find({ category: req.params.id,isActive: true });
     if (!product || product.length === 0) {
       return res.status(404).json({ message: 'Product not found1' });
     }
@@ -106,7 +106,7 @@ const getProductByName = async (req, res) => {
     const name = req.params.name;
      console.log(name);
     if (!name || !name.trim()) {
-      const products = await Product.find();
+      const products = await Product.find({isActive: true});
       console.log('products', products);
       return res.status(200).json(products);
     }

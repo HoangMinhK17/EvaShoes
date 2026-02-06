@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
+import { AuthContext } from '../context/AuthContext';
 import '../styles/cart.css';
 
 const API_BASE = 'http://localhost:3001';
@@ -23,6 +24,8 @@ const Cart = () => {
         showCart,
         setShowCart
     } = useContext(CartContext);
+
+    const { user, setShowAuthModal } = useContext(AuthContext);
 
     // State for selected items (checkbox)
     const [selectedItems, setSelectedItems] = React.useState(new Set());
@@ -287,6 +290,10 @@ const Cart = () => {
                                             onClick={() => {
                                                 if (selectedItems.size === 0) {
                                                     alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán!');
+                                                } else if (!user) {
+                                                    alert("Vui lòng đăng nhập để tiếp tục thanh toán!");
+                                                    setShowAuthModal(true);
+                                                    setShowCart(false);
                                                 } else {
                                                     const itemsToCheckout = cartItems.filter((_, index) => selectedItems.has(index));
                                                     setShowCart(false);

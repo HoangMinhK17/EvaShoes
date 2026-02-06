@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false); // Global state for AuthModal
 
   // Kiểm tra xem user có lưu trong localStorage không khi mount
   useEffect(() => {
@@ -107,7 +108,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, error, isCheckingSession, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, error, isCheckingSession, login, register, logout, showAuthModal, setShowAuthModal }}>
       {children}
     </AuthContext.Provider>
   );

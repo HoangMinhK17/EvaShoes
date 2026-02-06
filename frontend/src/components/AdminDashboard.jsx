@@ -961,7 +961,7 @@ export default function AdminDashboard() {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Quản Lí Người Dùng</h2>
-                <input type="text" placeholder="🔍 Tìm kiếm người dùng..." className="search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <input type="text" placeholder="🔍 Tìm kiếm người dùng(Tên, Email)..." className="search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
 
               {loading && (
@@ -1044,11 +1044,11 @@ export default function AdminDashboard() {
                   onChange={(e) => setSelectedStatus(e.target.value)}
                 >
                   <option value="all">Tất Cả Trạng Thái</option>
-                  <option value="pending">Chờ xử lý</option>
+                  <option value="pending" >Chờ xử lý</option>
                   <option value="confirmed">Đã xác nhận</option>
                   <option value="shipped">Đang giao</option>
-                  <option value="delivered">Đã giao</option>
-                  <option value="cancelled">Đã hủy</option>
+                  <option value="delivered" style={{ color: 'green' }}>Đã giao</option>
+                  <option value="cancelled" style={{ color: 'red' }}>Đã hủy</option>
                 </select>
               </div>
 
@@ -1106,7 +1106,7 @@ export default function AdminDashboard() {
                           </td>
                           <td>
                             <span className={`badge-${order.status}`}>
-                              {order.status === 'pending' && 'Chờ xử lý'}
+                              {order.status === 'pending' && 'Chờ xử lý' } 
                               {order.status === 'confirmed' && 'Đã xác nhận'}
                               {order.status === 'shipped' && 'Đang giao'}
                               {order.status === 'delivered' && 'Đã giao'}

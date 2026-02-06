@@ -1,9 +1,10 @@
 import { mongo } from "mongoose";
 import Order from "../models/Order.js";
+import Product from "../models/Product.js";
 
 const createOrder = async (req, res) => {
     try {
-        const { user, items, totalPrice, paymentMethod, shippingAddress, notes,codeOrder } = req.body;
+        const { user, items, totalPrice, paymentMethod, shippingAddress, notes, codeOrder } = req.body;
         const order = new Order({
             user,
             items,
@@ -36,7 +37,7 @@ const getOrderById = async (req, res) => {
 
 const getOrdersByUser = async (req, res) => {
     try {
-        const orders = await Order.find({ user: req.params.id }).populate( { path: "items.product", select: "name price image" } ).sort({ createdAt: -1 });
+        const orders = await Order.find({ user: req.params.id }).populate({ path: "items.product", select: "name price image" }).sort({ createdAt: -1 });
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -104,22 +105,47 @@ const searchOrders = async (req, res) => {
 const updateStatusOrder = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, cancelReason} = req.body;
-        const order = await Order.findById(id)
+        const { status, cancelReason } = req.body;
+        const order = await Order.findById(id);
+
         if (!order) {
-            throw new Error('Order not found');
+            return res.status(404).json({ message: 'Order not found' });
         }
-        if(status==='cancelled'){
+
+        if (status === 'cancelled') {
             order.cancelAt = new Date();
-            order.paymentStatus='failed';
+            order.paymentStatus = 'failed';
             order.cancelReason = cancelReason || null;
         }
-        if(status==='delivered'){
-            order.paymentStatus='paid';
+
+        if (status === 'delivered') {
+            order.paymentStatus = 'paid';
             order.deliveredAt = new Date();
+
+            // Update stock and sold count for each product
+            for (const item of order.items) {
+                const productId = item.product?._id || item.product; // nếu populate thì có _id
+                const sizeValue = Number(item.size); // ép về Number để match schema
+
+                const updated = await Product.findOneAndUpdate(
+                    { _id: productId, "sizes.size": sizeValue },
+                    {
+                        $inc: {
+                            "sizes.$[s].stock": -item.quantity,
+                            sold: item.quantity,
+                        },
+                    },
+                    {
+                        new: true,
+                        arrayFilters: [{ "s.size": sizeValue }],
+                    }
+                );
+
+            }
         }
+
         order.status = status;
-        await order.save(); 
+        await order.save();
         return res.status(200).json(order);
     } catch (error) {
         return res.status(500).json({ message: error.message });

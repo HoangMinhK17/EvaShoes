@@ -12,6 +12,10 @@ const UserInfo = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
+    // Update Name State
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editedName, setEditedName] = useState('');
+
     // Change Password State
     const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
     const [passwordData, setPasswordData] = useState({
@@ -47,6 +51,7 @@ const UserInfo = () => {
 
             const data = await response.json();
             setProfile(data);
+            setEditedName(data.username); // Initialize edited name
         } catch (err) {
             console.error('Error fetching profile:', err);
             setError(err.message);
@@ -93,7 +98,8 @@ const UserInfo = () => {
                 },
                 body: JSON.stringify({
                     currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword
+                    newPassword: passwordData.newPassword,
+                    confirmPassword: passwordData.confirmPassword
                 })
             });
 
@@ -106,6 +112,38 @@ const UserInfo = () => {
             alert('Đổi mật khẩu thành công!');
             setShowChangePasswordModal(false);
         } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleUpdateNameSubmit = async () => {
+        if (!editedName.trim()) {
+            alert('Tên người dùng không được để trống!');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/updateuser/${profile._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: editedName })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Cập nhật tên thất bại');
+            }
+
+            // Update local profile state
+            setProfile(prev => ({ ...prev, username: data.username }));
+            setIsEditingName(false);
+            alert('Cập nhật tên thành công!');
+        } catch (err) {
+            console.error('Update name error:', err);
             alert(err.message);
         }
     };
@@ -135,7 +173,68 @@ const UserInfo = () => {
                         <div className="info-group" style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: '#555' }}>Tên người dùng:</label>
                             <div style={{ padding: '10px', background: '#f9f9f9', borderRadius: '4px', border: '1px solid #eee' }}>
-                                {profile.username}
+                                {isEditingName ? (
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="text"
+                                            value={editedName}
+                                            onChange={(e) => setEditedName(e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '5px',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '3px'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={handleUpdateNameSubmit}
+                                            style={{
+                                                padding: '5px 10px',
+                                                backgroundColor: '#28a745',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '3px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Lưu
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsEditingName(false);
+                                                setEditedName(profile.username);
+                                            }}
+                                            style={{
+                                                padding: '5px 10px',
+                                                backgroundColor: '#dc3545',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '3px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Hủy
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>{profile.username}</span>
+                                        <button
+                                            onClick={() => setIsEditingName(true)}
+                                            style={{
+                                                padding: '5px 10px',
+                                                backgroundColor: 'transparent',
+                                                color: '#007bff',
+                                                border: '1px solid #007bff',
+                                                borderRadius: '3px',
+                                                cursor: 'pointer',
+                                                fontSize: '0.8rem'
+                                            }}
+                                        >
+                                            Chỉnh sửa
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -251,7 +350,7 @@ const UserInfo = () => {
                             </div>
                         </div>
                         <div className="modal-footer" style={{ justifyContent: 'flex-start', gap: '10px', marginLeft: '20px', marginBottom: '20px', width: '90%' }}>
-                          
+
                             <button
                                 className="btn-confirm"
                                 onClick={handleSubmitChangePassword}
@@ -259,10 +358,10 @@ const UserInfo = () => {
                             >
                                 Lưu Thay Đổi
                             </button>
-                              <button
+                            <button
                                 className="btn-cancel"
                                 onClick={() => setShowChangePasswordModal(false)}
-                                style={{ padding: '8px 15px', border: '1px solid #ddd',width: '50%', borderRadius: '4px', background: '#fff' }}
+                                style={{ padding: '8px 15px', border: '1px solid #ddd', width: '50%', borderRadius: '4px', background: '#fff' }}
                             >
                                 Hủy
                             </button>
