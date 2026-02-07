@@ -3,8 +3,26 @@ import Product from "../models/Product.js";
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({isActive: true}).populate('category', 'name').sort({ createdAt: -1 });
-    res.status(200).json(products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { isActive: true };
+    const totalProducts = await Product.countDocuments(query);
+    const products = await Product.find(query)
+      .populate('category', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.status(200).json({
+      products,
+      totalPages,
+      currentPage: page,
+      totalProducts
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -74,12 +92,12 @@ const updateProduct = async (req, res) => {
 }
 
 const deleteProduct = (req, res) => {
-  
+
 }
 
 const getProductByCategoryId = async (req, res) => {
   try {
-    const product = await Product.find({ category: req.params.id,isActive: true });
+    const product = await Product.find({ category: req.params.id, isActive: true }).sort({ createdAt: -1 });
     if (!product || product.length === 0) {
       return res.status(404).json({ message: 'Product not found1' });
     }
@@ -95,6 +113,7 @@ const getProductById = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Product not found2' });
     }
+
     res.status(200).json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -104,9 +123,9 @@ const getProductById = async (req, res) => {
 const getProductByName = async (req, res) => {
   try {
     const name = req.params.name;
-     console.log(name);
+    console.log(name);
     if (!name || !name.trim()) {
-      const products = await Product.find({isActive: true});
+      const products = await Product.find({ isActive: true });
       console.log('products', products);
       return res.status(200).json(products);
     }

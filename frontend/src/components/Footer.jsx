@@ -55,12 +55,7 @@ export default function Footer() {
       <div className="footer-bottom">
         <div className="container">
           <div className="footer-bottom-content">
-            <p>&copy; 2024 EVASHOES. All rights reserved.</p>
-            <div className="payment-methods">
-              <img src="https://via.placeholder.com/30x20?text=VISA" alt="Visa" />
-              <img src="https://via.placeholder.com/30x20?text=MC" alt="Mastercard" />
-              <img src="https://via.placeholder.com/30x20?text=ZP" alt="Zalopay" />
-            </div>
+            <p>&copy; 2026 EVASHOES. All rights reserved.</p>
           </div>
         </div>
       </div>

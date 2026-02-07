@@ -224,7 +224,7 @@ export default function AddProductModal({ isOpen, onClose, onSave, categories })
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="product-sellPrice">Giá Khuyến Mãi (₫)</label>
+                            <label htmlFor="product-sellPrice">Giá Bán (₫)</label>
                             <input
                                 type="number"
                                 id="product-sellPrice"

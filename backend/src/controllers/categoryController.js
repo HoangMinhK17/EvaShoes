@@ -1,22 +1,35 @@
 import Category from "../models/Category.js";
 
-const getAllCategories = async(req, res) => {
+const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({});
-    //console.log(categories);
-    res.status(200).json({ categories, message:"Lấy danh mục thành công"});
-    } catch (error) {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalCategories = await Category.countDocuments();
+    const categories = await Category.find({isActive: true}).skip(skip).limit(limit);
+    const totalPages = Math.ceil(totalCategories / limit);
+
+    res.status(200).json({
+      categories,
+      totalPages,
+      currentPage: page,
+      totalCategories,
+      message: "Lấy danh mục thành công"
+    });
+  } catch (error) {
     res.status(500).json({ message: error.message });
-    }
+  }
 }
+
 const creatCategory = async (req, res) => {
-    try {
-        const newCategory = new Category(req.body);
-        const savedCategory = await newCategory.save();
-        res.status(201).json(savedCategory);
-    } catch (error) {
-        res.status(500).json({ message: error.message });   
-    }
+  try {
+    const newCategory = new Category(req.body);
+    const savedCategory = await newCategory.save();
+    res.status(201).json(savedCategory);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 const updateCategory = async (req, res) => {
   try {
@@ -30,7 +43,7 @@ const updateCategory = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}    
+}
 const findCategoryByName = async (req, res) => {
   try {
     const { name } = req.params;
@@ -55,4 +68,4 @@ const findCategoryByName = async (req, res) => {
 const deleteCategory = (req, res) => {
   res.status(200).json({ message: 'Category deleted successfully' });
 }
-export { getAllCategories, creatCategory, updateCategory, deleteCategory,findCategoryByName };
+export { getAllCategories, creatCategory, updateCategory, deleteCategory, findCategoryByName };

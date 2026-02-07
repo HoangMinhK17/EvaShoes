@@ -9,7 +9,7 @@ const API_BASE = 'http://localhost:3001/api/evashoes';
 
 const Checkout = () => {
     const { user, token } = useContext(AuthContext);
-    const { clearCart } = useContext(CartContext);
+    const { clearCart, removeMultipleFromCart } = useContext(CartContext);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -346,7 +346,8 @@ const Checkout = () => {
             // Optimization: Call a backend endpoint "remove items" or just clearCart if simple.
             // Let's assume for this task we clear the whole cart for simplicity as usually users buy all.
             // If they buy partial, it's a known limitation for this iteration.
-            clearCart();
+            // Clear only purchased items from cart
+            removeMultipleFromCart(items);
 
             navigate('/');
 

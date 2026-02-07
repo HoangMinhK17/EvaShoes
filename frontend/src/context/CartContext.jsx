@@ -200,6 +200,46 @@ export const CartProvider = ({ children }) => {
         }
     }, [auth?.user?._id, auth?.token, removeFromCart, saveCartToDB]);
 
+    // Remove multiple items from cart (used after checkout)
+    const removeMultipleFromCart = useCallback((itemsToRemove) => {
+        // Create a set of keys for items to remove for efficient lookup
+        const textKeysToRemove = new Set(itemsToRemove.map(item => {
+            const pId = typeof item.product === 'object' ? item.product._id : item.product;
+            return `${pId}-${item.color || ''}-${item.size || ''}`;
+        }));
+
+        const newItems = cartItems.filter(item => {
+            const itemKey = `${item.product._id}-${item.color || ''}-${item.size || ''}`;
+            return !textKeysToRemove.has(itemKey);
+        });
+
+        setCartItems(newItems);
+
+        // If cart is empty after removal, clear it from DB
+        if (newItems.length === 0) {
+            if (auth?.user?._id) {
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                if (auth?.token) {
+                    headers['Authorization'] = `Bearer ${auth.token}`;
+                }
+                fetch(`${API_URL}/cart/clear`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ userId: auth.user._id }),
+                }).catch(error => console.error('Error clearing cart:', error));
+            }
+        } else {
+            // Save updated cart to DB
+            const totalPrice = newItems.reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+            );
+            saveCartToDB(newItems, totalPrice, auth?.user?._id, auth?.token);
+        }
+    }, [cartItems, auth?.user?._id, auth?.token, saveCartToDB]);
+
     const getTotalPrice = useCallback(() => {
         return cartItems.reduce(
             (total, item) => total + item.price * item.quantity,
@@ -250,6 +290,7 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         getTotalPrice,
         clearCart,
+        removeMultipleFromCart,
         cartCount: cartItems.length,
         showCart,
         setShowCart,
@@ -257,7 +298,7 @@ export const CartProvider = ({ children }) => {
         openCart,
         closeCart,
         isLoadingCart,
-    }), [cartItems, addToCart, removeFromCart, updateQuantity, getTotalPrice, clearCart, showCart, setShowCart, toggleShowCart, openCart, closeCart, isLoadingCart]);
+    }), [cartItems, addToCart, removeFromCart, updateQuantity, getTotalPrice, clearCart, removeMultipleFromCart, showCart, setShowCart, toggleShowCart, openCart, closeCart, isLoadingCart]);
 
     return (
         <CartContext.Provider value={value}>

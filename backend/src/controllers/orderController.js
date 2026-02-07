@@ -1,6 +1,7 @@
 import { mongo } from "mongoose";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import Fincancial from "../models/fincancial.js";
 
 const createOrder = async (req, res) => {
     try {
@@ -46,14 +47,31 @@ const getOrdersByUser = async (req, res) => {
 
 const getOrders = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
         const { status } = req.query;
 
         let filter = {};
         if (status) {
             filter.status = status;
         }
-        const orders = await Order.find(filter).populate("user", "name email").sort({ createdAt: -1 });
-        res.status(200).json(orders);
+
+        const totalOrders = await Order.countDocuments(filter);
+        const orders = await Order.find(filter)
+            .populate("user", "name email")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalOrders / limit);
+
+        res.status(200).json({
+            orders,
+            totalPages,
+            currentPage: page,
+            totalOrders
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -106,7 +124,7 @@ const updateStatusOrder = async (req, res) => {
     try {
         const { id } = req.params;
         const { status, cancelReason } = req.body;
-        const order = await Order.findById(id);
+        const order = await Order.findById(id).populate("items.product", "name price");
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
@@ -121,11 +139,12 @@ const updateStatusOrder = async (req, res) => {
         if (status === 'delivered') {
             order.paymentStatus = 'paid';
             order.deliveredAt = new Date();
-
+            let cost = 0;
             // Update stock and sold count for each product
             for (const item of order.items) {
-                const productId = item.product?._id || item.product; // nếu populate thì có _id
-                const sizeValue = Number(item.size); // ép về Number để match schema
+                const productId = item.product?._id || item.product;
+                const sizeValue = Number(item.size);
+                cost += item.quantity * item.product.price;
 
                 const updated = await Product.findOneAndUpdate(
                     { _id: productId, "sizes.size": sizeValue },
@@ -140,8 +159,16 @@ const updateStatusOrder = async (req, res) => {
                         arrayFilters: [{ "s.size": sizeValue }],
                     }
                 );
+                const fincancial = new Fincancial({
+                    order: order._id,
+                    totalAmount: order.totalPrice,
+                    date: order.deliveredAt,
+                    cost: cost
+                });
+                await fincancial.save();
 
             }
+
         }
 
         order.status = status;

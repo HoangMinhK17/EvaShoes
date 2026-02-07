@@ -7,4 +7,5 @@ router.post('/categories/', creatCategory);
 router.put('/categories/:id', updateCategory);
 router.delete('/categories/:id', deleteCategory);
 router.get('/categories/search/:name', findCategoryByName);
+
 export default router;

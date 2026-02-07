@@ -1,5 +1,16 @@
 import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import {
+  ComposedChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 import AdminProductDetail from './AdminProductDetail';
 import AddProductModal from './AddProductModal';
 import '../styles/admin.css';
@@ -58,20 +69,95 @@ export default function AdminDashboard() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelOrderId, setCancelOrderId] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
+
+  // Pagination State
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalPages: 1
+  });
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  };
+
+  const renderPagination = () => {
+    return (
+      <div className="pagination-controls" style={{
+        marginTop: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '15px'
+      }}>
+        <button
+          disabled={pagination.page === 1}
+          onClick={() => handlePageChange(pagination.page - 1)}
+          className="btn-pagination"
+          style={{
+            padding: '8px 16px',
+            backgroundColor: pagination.page === 1 ? '#ccc' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: pagination.page === 1 ? 'not-allowed' : 'pointer'
+          }}
+        >
+          Trước
+        </button>
+        <span style={{ fontWeight: 'bold' }}>Trang {pagination.page} / {pagination.totalPages}</span>
+        <button
+          disabled={pagination.page === pagination.totalPages}
+          onClick={() => handlePageChange(pagination.page + 1)}
+          className="btn-pagination"
+          style={{
+            padding: '8px 16px',
+            backgroundColor: pagination.page === pagination.totalPages ? '#ccc' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer'
+          }}
+        >
+          Sau
+        </button>
+      </div>
+    );
+  };
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (activeTab !== "overview") return;
+
+    (async () => {
+      const res = await fetch(`${API_BASE}/admin/stats`);
+      const data = await res.json();
+
+      setStats({
+        totalProducts: data.totalProducts ?? 0,
+        totalCategories: data.totalCategories ?? 0,
+        totalUsers: data.totalUsers ?? 0,
+        totalOrders: data.totalOrders ?? 0,
+      });
+    })();
+  }, [activeTab]);
+
 
   useEffect(() => {
     if (activeTab === 'categories') {
       fetchCategories();
     }
-  }, [activeTab]);
+  }, [activeTab, pagination.page]);
 
   useEffect(() => {
     if (activeTab === 'users') {
       fetchUsers();
     }
+  }, [activeTab, pagination.page]);
+
+  // Reset pagination when tab changes
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
   }, [activeTab]);
 
 
@@ -107,7 +193,7 @@ export default function AdminDashboard() {
     if (activeTab === 'products') {
       fetchProducts();
     }
-  }, [activeTab]);
+  }, [activeTab, pagination.page]);
 
   useEffect(() => {
     if (activeTab !== "orders") return;
@@ -123,34 +209,33 @@ export default function AdminDashboard() {
     if (activeTab === 'orders') {
       fetchOrders();
     }
-  }, [activeTab, selectedStatus]);
+  }, [activeTab, selectedStatus, pagination.page]);
 
-  const fetchStats = async () => {
-    try {
-      setStats({
-        totalProducts: 45,
-        totalCategories: 8,
-        totalUsers: 128,
-        totalOrders: 52,
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchFinancials();
     }
-  };
+  }, [activeTab]);
+
+
+
+
+
 
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     try {
       const url = selectedStatus === 'all'
-        ? `${API_BASE}/orders`
-        : `${API_BASE}/orders?status=${selectedStatus}`;
+        ? `${API_BASE}/orders?page=${pagination.page}&limit=${pagination.limit}`
+        : `${API_BASE}/orders?status=${selectedStatus}&page=${pagination.page}&limit=${pagination.limit}`;
 
       const response = await fetch(url);
       const data = await response.json();
 
       if (response.ok) {
-        setOrders(Array.isArray(data) ? data : []);
+        setOrders(data.orders || []);
+        setPagination(prev => ({ ...prev, totalPages: data.totalPages || 1 }));
         console.log('Fetched orders:', data);
       } else {
         setError(data.message || 'Không thể tải danh sách đơn hàng');
@@ -163,15 +248,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const [allCategories, setAllCategories] = useState([]);
+
   const fetchCategories = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/categories/`);
+      const response = await fetch(`${API_BASE}/categories/?page=${pagination.page}&limit=${pagination.limit}`);
       const data = await response.json();
 
       if (response.ok) {
         setCategories(data.categories || []);
+        setPagination(prev => ({ ...prev, totalPages: data.totalPages || 1 }));
         console.log('Fetched categories:', data.categories);
       } else {
         setError(data.message || 'Không thể tải danh sách danh mục');
@@ -184,16 +272,81 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchAllCategories = async () => {
+    try {
+      // Fetch a large number of categories to get all for dropdown
+      const response = await fetch(`${API_BASE}/categories/?page=1&limit=1000`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setAllCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error fetching all categories:', error);
+    }
+  };
+
+  const [financialData, setFinancialData] = useState([]);
+
+  const fetchFinancials = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/financials`);
+      const data = await response.json();
+
+      if (response.ok) {
+        // Process data
+        const processedData = processFinancialData(data);
+        setFinancialData(processedData);
+      } else {
+        console.error('Failed to fetch financials:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching financials:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const processFinancialData = (data) => {
+    // Group by date
+    const groupedData = {};
+
+    data.forEach(item => {
+      const date = new Date(item.date).toLocaleDateString('vi-VN'); // DD/MM/YYYY
+      if (!groupedData[date]) {
+        groupedData[date] = {
+          date: date,
+          revenue: 0,
+          profit: 0,
+          cost: 0
+        };
+      }
+      groupedData[date].revenue += item.totalAmount;
+      groupedData[date].cost += item.cost;
+      groupedData[date].profit += (item.totalAmount - item.cost);
+    });
+
+    // Convert object to array and sort by date
+    return Object.values(groupedData).sort((a, b) => {
+      // Custom sort for DD/MM/YYYY
+      const [dayA, monthA, yearA] = a.date.split('/');
+      const [dayB, monthB, yearB] = b.date.split('/');
+      return new Date(yearA, monthA - 1, dayA) - new Date(yearB, monthB - 1, dayB);
+    });
+  };
+
 
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/products/`);
+      const response = await fetch(`${API_BASE}/products/?page=${pagination.page}&limit=${pagination.limit}`);
       const data = await response.json();
 
       if (response.ok) {
-        setProducts(Array.isArray(data) ? data : []);
+        setProducts(data.products || []);
+        setPagination(prev => ({ ...prev, totalPages: data.totalPages || 1 }));
         console.log('Fetched products:', data);
       } else {
         setError(data.message || 'Không thể tải danh sách sản phẩm');
@@ -211,13 +364,12 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/getusers/`);
+      const response = await fetch(`${API_BASE}/getusers/?page=${pagination.page}&limit=${pagination.limit}`);
       const data = await response.json();
       console.log('Fetched users:', data);
       if (response.ok) {
-        // API trả về mảng trực tiếp, không phải object với property users
-        setUsers(Array.isArray(data) ? data : (data.users || []));
-        console.log('Set users to state:', Array.isArray(data) ? data : (data.users || []));
+        setUsers(data.users || []);
+        setPagination(prev => ({ ...prev, totalPages: data.totalPages || 1 }));
       } else {
         setError(data.message || 'Không thể tải danh sách người dùng');
       }
@@ -572,6 +724,9 @@ export default function AdminDashboard() {
 
   // Add Product handlers
   const handleOpenAddProductModal = () => {
+    if (allCategories.length === 0) {
+      fetchAllCategories();
+    }
     setShowAddProductModal(true);
   };
 
@@ -725,7 +880,7 @@ export default function AdminDashboard() {
                 <div className="stat-card">
                   <div className="stat-icon">📦</div>
                   <div className="stat-info">
-                    <p className="stat-label">Đơn Hàng</p>
+                    <p className="stat-label">Đơn Hàng Bán</p>
                     <p className="stat-value">{stats.totalOrders}</p>
                   </div>
                 </div>
@@ -768,20 +923,7 @@ export default function AdminDashboard() {
                       <td><span className="badge-success">Đã Giao</span></td>
                       <td><button className="view-btn">Xem</button></td>
                     </tr>
-                    <tr>
-                      <td>#002</td>
-                      <td>Trần Thị B</td>
-                      <td>850,000 ₫</td>
-                      <td><span className="badge-pending">Đang Xử Lý</span></td>
-                      <td><button className="view-btn">Xem</button></td>
-                    </tr>
-                    <tr>
-                      <td>#003</td>
-                      <td>Lê Văn C</td>
-                      <td>2,100,000 ₫</td>
-                      <td><span className="badge-success">Đã Giao</span></td>
-                      <td><button className="view-btn">Xem</button></td>
-                    </tr>
+
                   </tbody>
                 </table>
               </div>
@@ -885,6 +1027,7 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                  {renderPagination()}
                 </div>
               )}
             </div>
@@ -952,6 +1095,7 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                  {renderPagination()}
                 </div>
               )}
             </div>
@@ -1028,6 +1172,7 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                  {renderPagination()}
                 </div>
               )}
             </div>
@@ -1106,7 +1251,7 @@ export default function AdminDashboard() {
                           </td>
                           <td>
                             <span className={`badge-${order.status}`}>
-                              {order.status === 'pending' && 'Chờ xử lý' } 
+                              {order.status === 'pending' && 'Chờ xử lý'}
                               {order.status === 'confirmed' && 'Đã xác nhận'}
                               {order.status === 'shipped' && 'Đang giao'}
                               {order.status === 'delivered' && 'Đã giao'}
@@ -1159,6 +1304,7 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                  {renderPagination()}
                 </div>
               )}
             </div>
@@ -1167,8 +1313,33 @@ export default function AdminDashboard() {
           {activeTab === 'analytics' && (
             <div className="tab-content">
               <h2>Phân Tích & Báo Cáo</h2>
-              <div className="placeholder-content">
-                <p>📈 Các biểu đồ phân tích sẽ được hiển thị tại đây</p>
+              <div className="chart-container" style={{ width: '100%', height: 400, marginTop: 20 }}>
+                {financialData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart
+                      data={financialData}
+                      margin={{
+                        top: 20,
+                        right: 20,
+                        bottom: 20,
+                        left: 20,
+                      }}
+                    >
+                      <CartesianGrid stroke="#f5f5f5" />
+                      <XAxis dataKey="date" scale="point" padding={{ left: 30, right: 30 }} />
+                      <YAxis label={{ value: '', angle: -90, position: 'insideLeft' }} tickFormatter={(value) => value.toLocaleString('vi-VN')} />
+                      <Tooltip formatter={(value) => `${value.toLocaleString('vi-VN')} ₫`} />
+                      <Legend />
+                      <Bar dataKey="revenue" name="Doanh Thu" barSize={20} fill="#413ea0" />
+                      <Bar dataKey="cost" name="Chi Phí" barSize={20} fill="#ff7300" />
+                      <Bar dataKey="profit" name="Lợi Nhuận" barSize={20} fill="#82ca9d" />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="empty-state">
+                    <p>📊 Chưa có dữ liệu tài chính để hiển thị</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1322,7 +1493,7 @@ export default function AdminDashboard() {
         isOpen={showAddProductModal}
         onClose={handleCloseAddProductModal}
         onSave={handleSaveProduct}
-        categories={categories}
+        categories={allCategories}
       />
 
       {/* Order Detail Modal */}
@@ -1435,23 +1606,23 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <div className="status-update">
-                  
-                  {selectedOrder.status === 'cancelled' && (  
+
+                  {selectedOrder.status === 'cancelled' && (
                     <>
-                     <div>
+                      <div>
 
-                        <label>Lí do hủy:</label> 
-                    
-                    <span>{selectedOrder.cancelReason ? selectedOrder.cancelReason : 'Không có lý do hủy'}.</span> 
-                     </div>
-                  
+                        <label>Lí do hủy:</label>
 
-                    <div>
-                      <label>Ngày hủy:</label>
-                      <span>{selectedOrder.cancelAt ? new Date(selectedOrder.cancelAt).toLocaleString('vi-VN') : 'N/A'}.</span>
-                    </div>
+                        <span>{selectedOrder.cancelReason ? selectedOrder.cancelReason : 'Không có lý do hủy'}.</span>
+                      </div>
+
+
+                      <div>
+                        <label>Ngày hủy:</label>
+                        <span>{selectedOrder.cancelAt ? new Date(selectedOrder.cancelAt).toLocaleString('vi-VN') : 'N/A'}.</span>
+                      </div>
                     </>
-                    
+
                   )}
 
                   {

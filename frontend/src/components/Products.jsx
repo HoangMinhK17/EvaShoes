@@ -321,12 +321,29 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const { selectedCategory, setSelectedCategory } = useContext(CategoryContext);
 
+  // Pagination State
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12, // Show 12 products per page
+    totalPages: 1
+  });
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      // Scroll to top of products section
+      document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`${API_URL}/products/`);
+      const response = await fetch(`${API_URL}/products/?page=${pagination.page}&limit=${pagination.limit}`);
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
-      setProducts(data || []);
+
+      setProducts(data.products || []);
+      setPagination(prev => ({ ...prev, totalPages: data.totalPages || 1 }));
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
@@ -338,49 +355,56 @@ export default function Products() {
       const response = await fetch(`${API_URL}/products/search/${categoryId}`);
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
-      setProducts(data || []);
+      // Handle both array (legacy) and object (paginated) responses
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        setProducts(data.products || []);
+      }
     } catch (error) {
       console.error('Error fetching products by category:', error);
       setProducts([]);
     }
   };
 
+  // Consolidate side effects to avoid race conditions and double fetching
   useEffect(() => {
-    setSearchTerm('');
-    if (selectedCategory) {
-      fetchProductsByCategory(selectedCategory);
-    } else {
-      fetchProducts();
-    }
-  }, [selectedCategory]);
+    const delay = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchProducts(searchTerm);
+      } else if (selectedCategory) {
+        fetchProductsByCategory(selectedCategory);
+      } else {
+        fetchProducts();
+      }
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [selectedCategory, pagination.page, searchTerm]);
+
+  // Reset pagination when filter changes
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, [selectedCategory, searchTerm]);
 
   const searchProducts = async (keyword) => {
     try {
       const response = await fetch(`${API_URL}/products/searchByName/${keyword}`);
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
-      setProducts(data || []);
+      // Handle both array and object responses
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        setProducts(data.products || []);
+      }
     } catch (error) {
       console.error('Error searching products:', error);
       setProducts([]);
     }
   };
 
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      if (searchTerm.trim()) {
-        searchProducts(searchTerm);
-      } else {
-        if (selectedCategory) {
-          fetchProductsByCategory(selectedCategory);
-        } else {
-          fetchProducts();
-        }
-      }
-    }, 500);
-
-    return () => clearTimeout(delay);
-  }, [searchTerm]);
+  // Removed duplicate useEffect for searchTerm to avoid conflict
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -407,14 +431,15 @@ export default function Products() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+    if (selectedCategory) setSelectedCategory(null); // Clear category when searching
   };
 
 
   return (
     <section className="products" id="products">
-      <h2 className="section-title" style={{ textAlign: 'center' }}>SẢN PHẨM & XU HƯỚNG</h2>
+      <h2 className="section-title" style={{ textAlign: 'start' }}>SẢN PHẨM & XU HƯỚNG</h2>
 
-      <div className="search-container" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+      <div className="search-container" style={{ display: 'flex', justifyContent: 'start', marginBottom: '20px' }}>
         <input
           type="text"
           placeholder="🔍 Tìm kiếm sản phẩm..."
@@ -423,7 +448,7 @@ export default function Products() {
           style={{
             padding: '10px 15px',
             width: '100%',
-            maxWidth: '400px',
+            maxWidth: '270px',
             borderRadius: '25px',
             border: '1px solid #ddd',
             outline: 'none',
@@ -461,12 +486,73 @@ export default function Products() {
         </div>
       )}
 
-      {selectedProductId && (
-        <ProductDetail
-          productId={selectedProductId}
-          onClose={() => setSelectedProductId(null)}
-        />
-      )}
+
+      {/* Pagination Controls */}
+      {
+        !selectedCategory && !searchTerm && (
+          <div className="pagination-controls" style={{
+            marginTop: '30px',
+            display: 'flex',
+            justifyContent: 'start',
+            alignItems: 'center',
+            gap: '15px',
+
+          }}>
+            <button
+              disabled={pagination.page === 1}
+              onClick={() => handlePageChange(pagination.page - 1)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: pagination.page === 1 ? '#E0E0E0' : 'black',
+                color: pagination.page === 1 ? '#999' : 'white',
+                border: 'none',
+                borderRadius: '25px',
+                cursor: pagination.page === 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease',
+                width: '150px',
+                height: '40px',
+              }}
+            >
+              ← TRƯỚC
+            </button>
+            <span style={{
+              fontWeight: 'bold',
+              fontSize: '16px',
+              color: '#333'
+            }}>
+              TRANG {pagination.page} / {pagination.totalPages}
+            </span>
+            <button
+              disabled={pagination.page === pagination.totalPages}
+              onClick={() => handlePageChange(pagination.page + 1)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: pagination.page === pagination.totalPages ? '#E0E0E0' : 'black',
+                color: pagination.page === pagination.totalPages ? '#999' : 'white',
+                border: 'none',
+                borderRadius: '25px',
+                cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease',
+                width: '150px',
+                height: '40px',
+              }}
+            >
+              SAU →
+            </button>
+          </div>
+        )
+      }
+
+      {
+        selectedProductId && (
+          <ProductDetail
+            productId={selectedProductId}
+            onClose={() => setSelectedProductId(null)}
+          />
+        )
+      }
     </section>
   );
 }
